@@ -43,6 +43,10 @@ export default function ShopModal({ isOpen, onClose, userPoints, shopItems, last
               <Clock className="w-3 h-3" />
               <span>REFRESH IN: {timeLeft}</span>
             </div>
+            {/* Debug Info - Remove this later */}
+            <div className="text-xs text-yellow-400 mt-1">
+              YOUR CREDITS: {userPoints} CR | ITEMS: {shopItems.length}
+            </div>
           </div>
           <button onClick={onClose} className="text-red-500 hover:text-red-400">
             <X size={24} />
@@ -53,12 +57,14 @@ export default function ShopModal({ isOpen, onClose, userPoints, shopItems, last
         <div className="grid grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
           {shopItems.map((item) => {
             const canAfford = userPoints >= item.price;
+            console.log(`Item: ${item.name}, Price: ${item.price}, User Points: ${userPoints}, Can Afford: ${canAfford}`);
+            
             return (
               <div 
                 key={item.id} 
                 className={`
                   relative border border-cyan-800 bg-slate-900/50 p-4 rounded flex flex-col items-center text-center transition-all group
-                  ${canAfford ? "hover:border-cyan-400 cursor-pointer" : "opacity-50 grayscale"}
+                  ${canAfford ? "hover:border-cyan-400 hover:scale-105" : "opacity-60"}
                 `}
               >
                 <div className="text-4xl mb-2 filter drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">
@@ -71,14 +77,20 @@ export default function ShopModal({ isOpen, onClose, userPoints, shopItems, last
                   onClick={() => canAfford && onBuy(item)}
                   disabled={!canAfford}
                   className={`
-                    w-full py-1 rounded text-xs font-bold uppercase tracking-wider
+                    w-full py-2 rounded text-xs font-bold uppercase tracking-wider transition-all
                     ${canAfford 
-                      ? "bg-cyan-700 text-white hover:bg-cyan-500 hover:shadow-[0_0_10px_cyan]" 
-                      : "bg-slate-800 text-slate-500"}
+                      ? "bg-cyan-700 text-white hover:bg-cyan-500 hover:shadow-[0_0_10px_cyan] cursor-pointer active:scale-95" 
+                      : "bg-slate-800 text-slate-500 cursor-not-allowed"}
                   `}
                 >
-                  {canAfford ? `${item.price} CR` : "LOCKED"}
+                  {item.price} CR
                 </button>
+                
+                {!canAfford && (
+                  <div className="absolute top-2 right-2 bg-red-900 text-red-200 text-[8px] px-2 py-1 rounded">
+                    LOCKED
+                  </div>
+                )}
               </div>
             );
           })}
