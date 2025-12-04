@@ -2,7 +2,8 @@
 import { useState } from "react";
 import { useHabitTracker } from "../hooks/useHabitTracker";
 import ShopModal from "../components/ShopModal";
-import { Plus, Check, Trash2, Trophy, Cpu, Zap } from "lucide-react";
+import InventoryModal from "../components/InventoryModal";
+import { Plus, Check, Trash2, Trophy, Cpu, Zap, Package } from "lucide-react";
 
 export default function Home() {
   const {
@@ -18,6 +19,7 @@ export default function Home() {
 
   const [input, setInput] = useState("");
   const [isShopOpen, setIsShopOpen] = useState(false);
+  const [isInventoryOpen, setIsInventoryOpen] = useState(false);
   const [notification, setNotification] = useState(null);
 
   if (!isLoaded) {
@@ -49,6 +51,11 @@ export default function Home() {
     const success = buyItem(item);
     if (success) {
       showNotification(`ACQUIRED: ${item.name}`, "success");
+      // Auto-open inventory after purchase
+      setTimeout(() => {
+        setIsShopOpen(false);
+        setIsInventoryOpen(true);
+      }, 1500);
     } else {
       showNotification("INSUFFICIENT CREDITS", "error");
     }
@@ -101,10 +108,19 @@ export default function Home() {
             <span>{totalStreak}</span>
           </div>
 
-          <div className="flex items-center gap-2 px-3 py-2 border border-slate-600 bg-slate-900/50 text-slate-300 text-sm">
-            <Trophy className="w-4 h-4 text-purple-400" />
+          {/* Inventory Button with Badge */}
+          <button
+            onClick={() => setIsInventoryOpen(true)}
+            className="relative flex items-center gap-2 px-3 py-2 border border-purple-600 bg-purple-900/50 hover:bg-purple-800 text-purple-300 hover:text-purple-100 text-sm transition-all"
+          >
+            <Package className="w-4 h-4" />
             <span>{user.inventory.length}</span>
-          </div>
+            {user.inventory.length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-purple-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                {user.inventory.length}
+              </span>
+            )}
+          </button>
 
           {/* Credits Display */}
           <div className="flex items-center gap-2 bg-black text-cyan-400 px-5 py-2 border border-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.2)]">
@@ -204,6 +220,7 @@ export default function Home() {
         ))}
       </div>
 
+      {/* Modals */}
       <ShopModal
         isOpen={isShopOpen}
         onClose={() => setIsShopOpen(false)}
@@ -211,6 +228,12 @@ export default function Home() {
         shopItems={shop.items}
         lastRefresh={shop.lastRefresh}
         onBuy={handleBuy}
+      />
+
+      <InventoryModal
+        isOpen={isInventoryOpen}
+        onClose={() => setIsInventoryOpen(false)}
+        inventory={user.inventory}
       />
     </main>
   );
