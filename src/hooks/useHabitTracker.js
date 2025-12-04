@@ -14,7 +14,8 @@ export function useHabitTracker() {
     
     try {
       const savedHabits = JSON.parse(localStorage.getItem("habits") || "[]");
-      const savedUser = JSON.parse(localStorage.getItem("user") || '{"points": 0, "inventory": []}');
+      // FIX: Give new users 200 starting credits
+      const savedUser = JSON.parse(localStorage.getItem("user") || '{"points": 200, "inventory": []}');
       const savedShop = JSON.parse(localStorage.getItem("shop") || '{"items": [], "lastRefresh": 0}');
 
       setHabits(savedHabits);
