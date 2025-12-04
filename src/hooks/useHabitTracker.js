@@ -5,25 +5,33 @@ import { generateShopItems } from "../utils/aiGenerator";
 export function useHabitTracker() {
   const [habits, setHabits] = useState([]);
   const [user, setUser] = useState({ points: 0, inventory: [] });
-  const [shop, setShop] = useState({ items: [], lastRefresh: 0 }); // New Shop State
+  const [shop, setShop] = useState({ items: [], lastRefresh: 0 });
   const [isLoaded, setIsLoaded] = useState(false);
 
+  // Load data from localStorage on mount
   useEffect(() => {
-    const savedHabits = JSON.parse(localStorage.getItem("habits") || "[]");
-    const savedUser = JSON.parse(localStorage.getItem("user") || '{"points": 0, "inventory": []}');
-    const savedShop = JSON.parse(localStorage.getItem("shop") || '{"items": [], "lastRefresh": 0}');
+    if (typeof window === 'undefined') return;
+    
+    try {
+      const savedHabits = JSON.parse(localStorage.getItem("habits") || "[]");
+      const savedUser = JSON.parse(localStorage.getItem("user") || '{"points": 0, "inventory": []}');
+      const savedShop = JSON.parse(localStorage.getItem("shop") || '{"items": [], "lastRefresh": 0}');
 
-    setHabits(savedHabits);
-    setUser(savedUser);
-    setShop(savedShop);
-    setIsLoaded(true);
+      setHabits(savedHabits);
+      setUser(savedUser);
+      setShop(savedShop);
+      setIsLoaded(true);
+    } catch (error) {
+      console.error("Error loading data:", error);
+      setIsLoaded(true);
+    }
   }, []);
 
-  // --- THE AI SHOP REFRESH LOGIC ---
+  // AI Shop Refresh Logic
   useEffect(() => {
-    if (!isLoaded) return;
+    if (!isLoaded || typeof window === 'undefined') return;
 
-    const REFRESH_INTERVAL = 5 * 60 * 60 * 1000; // 5 Hours in Milliseconds
+    const REFRESH_INTERVAL = 5 * 60 * 60 * 1000; // 5 hours
     const now = Date.now();
 
     // If shop is empty OR 5 hours have passed
@@ -33,46 +41,90 @@ export function useHabitTracker() {
       
       const newShopState = { items: newItems, lastRefresh: now };
       setShop(newShopState);
-      localStorage.setItem("shop", JSON.stringify(newShopState));
+      
+      try {
+        localStorage.setItem("shop", JSON.stringify(newShopState));
+      } catch (error) {
+        console.error("Error saving shop:", error);
+      }
     }
-  }, [isLoaded, shop.lastRefresh]); 
-  // ----------------------------------
+  }, [isLoaded, shop.lastRefresh, shop.items.length]);
 
+  // Save habits and user to localStorage whenever they change
   useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem("habits", JSON.stringify(habits));
-      localStorage.setItem("user", JSON.stringify(user));
+    if (isLoaded && typeof window !== 'undefined') {
+      try {
+        localStorage.setItem("habits", JSON.stringify(habits));
+        localStorage.setItem("user", JSON.stringify(user));
+      } catch (error) {
+        console.error("Error saving data:", error);
+      }
     }
   }, [habits, user, isLoaded]);
 
   const addHabit = (name) => {
-    const newHabit = { id: Date.now(), name, completed: false, streak: 0 };
+    const newHabit = { 
+      id: Date.now(), 
+      name, 
+      completed: false, 
+      streak: 0,
+      lastCompleted: null 
+    };
     setHabits((prev) => [...prev, newHabit]);
   };
 
-  const deleteHabit = (id) => setHabits((prev) => prev.filter((h) => h.id !== id));
+  const deleteHabit = (id) => {
+    setHabits((prev) => prev.filter((h) => h.id !== id));
+  };
 
   const completeHabit = (id) => {
-    setHabits((prev) => prev.map((h) => {
-      if (h.id === id && !h.completed) {
-        setUser((u) => ({ ...u, points: u.points + 50 })); // Higher points for Cyberpunk economy
-        return { ...h, completed: true, streak: h.streak + 1 };
-      }
-      return h;
-    }));
+    setHabits((prev) =>
+      prev.map((h) => {
+        if (h.id === id && !h.completed) {
+          // Award points
+          setUser((u) => ({ 
+            ...u, 
+            points: u.points + 50 
+          }));
+          
+          return { 
+            ...h, 
+            completed: true, 
+            streak: h.streak + 1,
+            lastCompleted: Date.now()
+          };
+        }
+        return h;
+      })
+    );
   };
 
   const buyItem = (item) => {
     if (user.points >= item.price) {
       setUser((prev) => ({
         points: prev.points - item.price,
-        inventory: [...prev.inventory, item]
+        inventory: [...prev.inventory, { ...item, purchasedAt: Date.now() }]
       }));
       return true;
     }
     return false;
   };
 
-  return { habits, user, shop, isLoaded, addHabit, deleteHabit, completeHabit, buyItem };
+  const resetHabit = (id) => {
+    setHabits((prev) =>
+      prev.map((h) => (h.id === id ? { ...h, completed: false } : h))
+    );
+  };
+
+  return {
+    habits,
+    user,
+    shop,
+    isLoaded,
+    addHabit,
+    deleteHabit,
+    completeHabit,
+    buyItem,
+    resetHabit
+  };
 }
-// src/utils/aiGenerator.js
