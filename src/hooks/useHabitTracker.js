@@ -12,7 +12,12 @@ export function useHabitTracker() {
     unlockedAchievements: [],
     totalPointsEarned: 0,
     totalCompleted: 0,
-    lastResetDate: null
+    lastResetDate: null,
+    lifetimeStats: {
+      totalHabitsCreated: 0,
+      totalCompletions: 0,
+      highestStreak: 0
+    }
   });
   const [shop, setShop] = useState({ items: [], lastRefresh: 0 });
   const [isLoaded, setIsLoaded] = useState(false);
