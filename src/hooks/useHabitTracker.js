@@ -31,7 +31,7 @@ export function useHabitTracker() {
       const savedHabits = JSON.parse(localStorage.getItem("habits") || "[]");
       const savedUser = JSON.parse(
         localStorage.getItem("user") || 
-        '{"points": 200, "inventory": [], "unlockedAchievements": [], "totalPointsEarned": 0, "totalCompleted": 0, "lastResetDate": null}'
+        '{"points": 200, "inventory": [], "unlockedAchievements": [], "totalPointsEarned": 0, "totalCompleted": 0, "lastResetDate": null, "lifetimeStats": {"totalHabitsCreated": 0, "totalCompletions": 0, "highestStreak": 0}}'
       );
       const savedShop = JSON.parse(localStorage.getItem("shop") || '{"items": [], "lastRefresh": 0}');
 
@@ -136,6 +136,15 @@ export function useHabitTracker() {
       createdAt: Date.now()
     };
     setHabits((prev) => [...prev, newHabit]);
+    
+    // Update lifetime stats
+    setUser((prev) => ({
+      ...prev,
+      lifetimeStats: {
+        ...prev.lifetimeStats,
+        totalHabitsCreated: (prev.lifetimeStats?.totalHabitsCreated || 0) + 1
+      }
+    }));
   };
 
   const deleteHabit = (id) => {
@@ -189,7 +198,12 @@ export function useHabitTracker() {
             ...u, 
             points: u.points + 50,
             totalPointsEarned: (u.totalPointsEarned || 0) + 50,
-            totalCompleted: (u.totalCompleted || 0) + 1
+            totalCompleted: (u.totalCompleted || 0) + 1,
+            lifetimeStats: {
+              ...u.lifetimeStats,
+              totalCompletions: (u.lifetimeStats?.totalCompletions || 0) + 1,
+              highestStreak: Math.max(u.lifetimeStats?.highestStreak || 0, newStreak)
+            }
           }));
           
           return { 
