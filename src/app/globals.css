@@ -1,26 +1,35 @@
+/* src/app/globals.css - MOBILE RESPONSIVE VERSION */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: #0f172a; /* Dark Cyberpunk Blue */
+  --background: #0f172a;
   --foreground: #ffffff;
 }
 
 body {
   color: var(--foreground);
   background-color: var(--background);
-  /* Cyber Grid Background */
   background-image: 
     linear-gradient(rgba(0, 255, 255, 0.1) 1px, transparent 1px),
     linear-gradient(90deg, rgba(0, 255, 255, 0.1) 1px, transparent 1px);
   background-size: 40px 40px;
   min-height: 100vh;
+  /* Prevent horizontal scroll on mobile */
+  overflow-x: hidden;
 }
 
-/* Custom Scrollbar */
+/* Mobile-optimized scrollbar */
 ::-webkit-scrollbar { 
-  width: 8px; 
+  width: 6px; 
+}
+
+@media (min-width: 768px) {
+  ::-webkit-scrollbar { 
+    width: 8px; 
+  }
 }
 
 ::-webkit-scrollbar-track { 
@@ -36,9 +45,15 @@ body {
   background: #22d3ee;
 }
 
-/* Custom scrollbar for shop modal */
+/* Custom scrollbar for modals */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
+}
+
+@media (min-width: 768px) {
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -64,4 +79,162 @@ body {
 
 .animate-slideIn {
   animation: slideIn 0.3s ease-out;
+}
+
+/* Mobile-responsive notification positioning */
+@media (max-width: 640px) {
+  .notification-toast {
+    position: fixed;
+    top: auto !important;
+    bottom: 1rem;
+    left: 1rem;
+    right: 1rem;
+    width: auto;
+  }
+}
+
+/* Prevent text selection on buttons (better mobile UX) */
+button {
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+/* Mobile-friendly touch targets (minimum 44x44px) */
+@media (max-width: 640px) {
+  button, a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Smooth scrolling for anchor links */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Prevent zoom on input focus (iOS) */
+@media (max-width: 640px) {
+  input, textarea, select {
+    font-size: 16px;
+  }
+}
+
+/* Better safe area support for notched devices */
+@supports (padding: max(0px)) {
+  body {
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+  }
+}
+
+/* Loading skeleton animation */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.skeleton {
+  animation: shimmer 2s infinite;
+  background: linear-gradient(
+    to right,
+    #1e293b 0%,
+    #334155 50%,
+    #1e293b 100%
+  );
+  background-size: 1000px 100%;
+}
+
+/* Mobile modal improvements */
+@media (max-width: 640px) {
+  .modal-container {
+    max-height: 85vh;
+    margin: 1rem;
+  }
+  
+  .modal-header {
+    position: sticky;
+    top: 0;
+    background: #0f172a;
+    z-index: 10;
+  }
+}
+
+/* Better touch feedback */
+.touch-feedback {
+  transition: transform 0.1s ease;
+}
+
+.touch-feedback:active {
+  transform: scale(0.95);
+}
+
+/* Landscape mode adjustments */
+@media (max-height: 600px) and (orientation: landscape) {
+  .modal-container {
+    max-height: 90vh;
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  body {
+    background-image: none;
+  }
+  
+  .border {
+    border-width: 2px;
+  }
+}
+
+/* Dark mode already default, but prepare for light mode toggle */
+@media (prefers-color-scheme: light) {
+  /* Keep dark mode even if system is light */
+  /* Users in cyberpunk world prefer darkness! */
+}
+
+/* Loading states */
+.loading-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
+}
+
+/* Better focus states for accessibility */
+*:focus-visible {
+  outline: 2px solid #06b6d4;
+  outline-offset: 2px;
+}
+
+/* Hide scrollbar on mobile for cleaner look */
+@media (max-width: 640px) {
+  .hide-scrollbar-mobile {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .hide-scrollbar-mobile::-webkit-scrollbar {
+    display: none;
+  }
 }
