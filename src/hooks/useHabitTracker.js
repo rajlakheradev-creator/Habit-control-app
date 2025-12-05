@@ -1,4 +1,4 @@
-// src/hooks/useHabitTracker.js - ENHANCED WITH ACHIEVEMENTS
+// src/hooks/useHabitTracker.js - FIXED VERSION
 
 "use client";
 import { useState, useEffect } from "react";
@@ -10,7 +10,9 @@ export function useHabitTracker() {
     points: 0, 
     inventory: [],
     unlockedAchievements: [],
-    totalPointsEarned: 0 
+    totalPointsEarned: 0,
+    totalCompleted: 0,
+    lastResetDate: null
   });
   const [shop, setShop] = useState({ items: [], lastRefresh: 0 });
   const [isLoaded, setIsLoaded] = useState(false);
@@ -22,7 +24,10 @@ export function useHabitTracker() {
     
     try {
       const savedHabits = JSON.parse(localStorage.getItem("habits") || "[]");
-      const savedUser = JSON.parse(localStorage.getItem("user") || '{"points": 200, "inventory": [], "unlockedAchievements": [], "totalPointsEarned": 0}');
+      const savedUser = JSON.parse(
+        localStorage.getItem("user") || 
+        '{"points": 200, "inventory": [], "unlockedAchievements": [], "totalPointsEarned": 0, "totalCompleted": 0, "lastResetDate": null}'
+      );
       const savedShop = JSON.parse(localStorage.getItem("shop") || '{"items": [], "lastRefresh": 0}');
 
       setHabits(savedHabits);
@@ -34,6 +39,31 @@ export function useHabitTracker() {
       setIsLoaded(true);
     }
   }, []);
+
+  // Daily Reset Logic - Reset completed status at midnight
+  useEffect(() => {
+    if (!isLoaded || typeof window === 'undefined') return;
+
+    const today = new Date().toDateString();
+    
+    if (user.lastResetDate !== today) {
+      console.log("🔄 New day detected - resetting habits");
+      
+      // Reset all completed flags but preserve streaks
+      setHabits((prev) => 
+        prev.map((h) => ({
+          ...h,
+          completed: false
+        }))
+      );
+
+      // Update last reset date
+      setUser((prev) => ({
+        ...prev,
+        lastResetDate: today
+      }));
+    }
+  }, [isLoaded, user.lastResetDate]);
 
   // AI Shop Refresh Logic with REAL AI
   useEffect(() => {
@@ -86,7 +116,8 @@ export function useHabitTracker() {
       maxStreak,
       itemsPurchased: user.inventory.length,
       inventorySize: user.inventory.length,
-      totalPointsEarned: user.totalPointsEarned || 0
+      totalPointsEarned: user.totalPointsEarned || 0,
+      totalCompleted: user.totalCompleted || 0
     };
   };
 
@@ -96,7 +127,8 @@ export function useHabitTracker() {
       name, 
       completed: false, 
       streak: 0,
-      lastCompleted: null 
+      lastCompleted: null,
+      createdAt: Date.now()
     };
     setHabits((prev) => [...prev, newHabit]);
   };
@@ -109,17 +141,56 @@ export function useHabitTracker() {
     setHabits((prev) =>
       prev.map((h) => {
         if (h.id === id && !h.completed) {
-          // Award points
+          // Get today's date at midnight for comparison
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const todayTime = today.getTime();
+          
+          // Get yesterday's date at midnight
+          const yesterday = new Date(today);
+          yesterday.setDate(yesterday.getDate() - 1);
+          const yesterdayTime = yesterday.getTime();
+          
+          // Get the date of last completion at midnight
+          let lastCompletedTime = null;
+          if (h.lastCompleted) {
+            const lastDate = new Date(h.lastCompleted);
+            lastDate.setHours(0, 0, 0, 0);
+            lastCompletedTime = lastDate.getTime();
+          }
+          
+          let newStreak = 1; // Default to 1 for first completion or broken streak
+          
+          if (lastCompletedTime) {
+            if (lastCompletedTime === yesterdayTime) {
+              // Completed yesterday - increment streak
+              newStreak = h.streak + 1;
+            } else if (lastCompletedTime === todayTime) {
+              // Already completed today (shouldn't happen but just in case)
+              newStreak = h.streak;
+            }
+            // If lastCompletedTime is older than yesterday, streak resets to 1
+          }
+          
+          console.log(`Habit "${h.name}" completed:`, {
+            previousStreak: h.streak,
+            newStreak,
+            lastCompleted: lastCompletedTime ? new Date(lastCompletedTime).toDateString() : 'never',
+            yesterday: new Date(yesterdayTime).toDateString()
+          });
+          
+          // Award points and increment total completed counter
           setUser((u) => ({ 
             ...u, 
             points: u.points + 50,
-            totalPointsEarned: (u.totalPointsEarned || 0) + 50
+            totalPointsEarned: (u.totalPointsEarned || 0) + 50,
+            totalCompleted: (u.totalCompleted || 0) + 1
           }));
           
           return { 
             ...h, 
             completed: true, 
-            streak: h.streak + 1,
+            streak: newStreak,
             lastCompleted: Date.now()
           };
         }
@@ -133,7 +204,7 @@ export function useHabitTracker() {
       setUser((prev) => ({
         ...prev,
         points: prev.points - item.price,
-        inventory: [...prev.inventory, { ...item, purchasedAt: Date.now() }]
+        inventory: [...prev.inventory, { ...item, purchasedAt: Date.now(), viewed: false }]
       }));
       return true;
     }
@@ -175,6 +246,13 @@ export function useHabitTracker() {
     }
   };
 
+  const markInventoryAsViewed = () => {
+    setUser((prev) => ({
+      ...prev,
+      inventory: prev.inventory.map(item => ({ ...item, viewed: true }))
+    }));
+  };
+
   return {
     habits,
     user,
@@ -188,6 +266,7 @@ export function useHabitTracker() {
     buyItem,
     resetHabit,
     claimAchievement,
-    refreshShop
+    refreshShop,
+    markInventoryAsViewed
   };
 }
