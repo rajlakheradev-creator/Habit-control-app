@@ -56,7 +56,7 @@ const ACHIEVEMENTS = [
     name: "Dedicated",
     description: "Complete 20 habits total",
     icon: "💪",
-    requirement: (stats) => stats.completedToday >= 20,
+    requirement: (stats) => stats.totalCompleted >= 20,
     reward: 200,
   },
   {
