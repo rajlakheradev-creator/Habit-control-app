@@ -94,12 +94,8 @@ export default function Home() {
   };
 
   const completedCount = habits.filter((h) => h.completed).length;
-  const activeStreak = habits.reduce((sum, h) => sum + h.streak, 0);
+  const totalStreak = habits.reduce((sum, h) => sum + h.streak, 0);
   const unlockedCount = user.unlockedAchievements?.length || 0;
-  
-  // Use lifetime stats for display (doesn't reset when habits are deleted)
-  const displayCompletedCount = completedCount; // Today's completion count
-  const displayTotalStreak = user.lifetimeStats?.highestStreak || activeStreak; // Show highest streak ever achieved
   
   // Count only items that haven't been viewed yet (marked when inventory opens)
   const newItemsCount = user.inventory?.filter(item => item.viewed === false).length || 0;
@@ -144,13 +140,13 @@ export default function Home() {
           {/* Completion Stats */}
           <div className="flex items-center gap-2 px-2 md:px-3 py-2 border border-slate-600 bg-slate-900/50 text-slate-300 text-xs md:text-sm">
             <Check className="w-3 h-3 md:w-4 md:h-4 text-green-400" />
-            <span>{displayCompletedCount}/{habits.length}</span>
+            <span>{completedCount}/{habits.length}</span>
           </div>
 
-          {/* Streak Stats - Shows highest streak ever or current total */}
-          <div className="flex items-center gap-2 px-2 md:px-3 py-2 border border-slate-600 bg-slate-900/50 text-slate-300 text-xs md:text-sm" title="Highest Streak Achieved">
+          {/* Streak Stats - Total of all active habits */}
+          <div className="flex items-center gap-2 px-2 md:px-3 py-2 border border-slate-600 bg-slate-900/50 text-slate-300 text-xs md:text-sm" title="Combined Streak of All Active Habits">
             <Zap className="w-3 h-3 md:w-4 md:h-4 text-yellow-400" />
-            <span>{displayTotalStreak}</span>
+            <span>{totalStreak}</span>
           </div>
 
           {/* Achievements Button */}
